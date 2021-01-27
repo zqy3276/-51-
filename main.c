@@ -62,12 +62,14 @@ func fun_array[8] = {SetNCT_7,SetNCT_6,SetNCT_5,SetNCT_4,
 void KeyDown(void);
 void delay(u2 i);
 void DisPlay(u1* Num);
-void FirstNumIsZeroFlagSet(u1* Num);
+void FirstNumIsZeroFlagSet(u1* Num,u1 n);
 u1 KeyValue;
+/**********下面的这个数组不能改**********/
 u1 FirstNumIsZeor[8] = {1,0,0,0,0,0,0,0};
+/**********上面的这个数组不能改**********/
 void main()
 {
-    u1 Num[8] = {0,0,0,0,0,0,0,5};
+    u1 Num[8] = {0,1,2,3,4,5,6,7};
 	
     while(1)
 	{
@@ -161,7 +163,7 @@ void DisPlay(u1* Num)
 	u1 getNum;
 	u1 j = 7;  //用于函数指针
 	u1 i = 0;
-	FirstNumIsZeroFlagSet(Num);
+	FirstNumIsZeroFlagSet(Num,7);
 	for(;i<=7;i++)
 	{
 	    getNum = 0xf;
@@ -177,8 +179,34 @@ void DisPlay(u1* Num)
 		}
 	}  
 }
-
-void FirstNumIsZeroFlagSet(u1* Num)
+/********************************************
+*这个方法是用于不显示第一个非零数字之前的零 *
+*比如001234500，1之前的两个0应该在数码管上  *
+*不显示，数码管上应该只显示1234500          *
+********************************************/
+void FirstNumIsZeroFlagSet(u1* Num,u1 n)
+{
+    u1 i;
+	if(n>0)	  //这里必须要大于0，不然会发生乱七八糟的事情
+	{
+		i = n; 
+		//注意，这里必须要初始化，不然的话i的值很可能是0，会把u1 FirstNumIsZeor[8] = {1,0,0,0,0,0,0,0};的1给串改掉
+		if(Num[n] != 0)
+		{
+			 for(i=n;i>0;i--)
+			{
+				 FirstNumIsZeor[i] = 1;
+			}
+		}
+		else
+		{
+			FirstNumIsZeor[i] = 0;
+			FirstNumIsZeroFlagSet(Num,(n-1));
+		}
+	}
+}
+/* 下面的代码优化后得到上面的函数
+void FirstNumIsZeroFlagSet(u1* Num)         Num[8] = {0,1,2,3,4,5,6,7};
 {
     u1 i;
     if(Num[7] != 0)
@@ -260,3 +288,4 @@ void FirstNumIsZeroFlagSet(u1* Num)
 		}
 	}
 }
+*/

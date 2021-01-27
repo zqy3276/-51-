@@ -1,0 +1,17 @@
+<html>
+<body>
+<pre>
+<h1>µVision Build Log</h1>
+<h2>Project:</h2>
+C:\Users\Administrator\Desktop\Keil_workspace\calc_test_1\temp.uvproj
+Project File Date:  01/05/2021
+
+<h2>Output:</h2>
+Build target 'Target 1'
+compiling main.c...
+linking...
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?KEYDOWN?MAIN
+Program Size: data=68.0 xdata=0 code=880
+creating hex file from "temp"...
+"temp" - 0 Error(s), 1 Warning(s).
