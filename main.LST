@@ -1,4 +1,4 @@
-C51 COMPILER V9.01   MAIN                                                                  01/23/2021 14:03:24 PAGE 1   
+C51 COMPILER V9.01   MAIN                                                                  01/10/2021 16:39:53 PAGE 1   
 
 
 C51 COMPILER V9.01, COMPILATION OF MODULE MAIN
@@ -11,315 +11,488 @@ line level    source
    2          
    3          #define GPIO_DIG P0
    4          #define GPIO_KEY P1
-   5          //下面三个用于控制哪个数码管亮
-   6          sbit LSA = P2^2;
-   7          sbit LSB = P2^3;
-   8          sbit LSC = P2^4;
-   9          
-  10          
-  11          //数码管英语：numerical code tube
-  12          //用三个字母加数字表示显示的数码管NCT_num
-  13          //最左边的是0编号，最右边的是7编号
-  14          void SetNCT_0(void);
-  15          void SetNCT_1(void);
-  16          void SetNCT_2(void);
-  17          void SetNCT_3(void);
-  18          void SetNCT_4(void);
-  19          void SetNCT_5(void);
-  20          void SetNCT_6(void);
-  21          void SetNCT_7(void);
-  22          #define NCT_(x)    (SetNCT_##x)
-  23          /*
-  24          #define NCT_0()    (SetNCT_0())  
-  25          #define NCT_1()    (SetNCT_1())
-  26          #define NCT_2()    (SetNCT_2())
-  27          #define NCT_3()    (SetNCT_3())
-  28          #define NCT_4()    (SetNCT_4())
-  29          #define NCT_5()    (SetNCT_5())
-  30          #define NCT_6()    (SetNCT_6())
-  31          #define NCT_7()    (SetNCT_7())
-  32          */
-  33          /********************************************
-  34          *  +---0x01---+                             *
-  35          *  |              |                                                         *
-  36          *  |          |                                                         *
-  37          * 0x20      0x02        数码管上的显示数字              *
-  38          *  |          |                                                         *
-  39          *  |          |                                                         *
-  40          *  +---0x40---+                                                         *
-  41          *  |              |                                                             *
-  42          *  |              |                                                             *
-  43          * 0x10      0x04                                                        *
-  44          *  |              |                                                             *
-  45          *  |          |                                                         *
-  46          *  +---0x08---+ 0x80                                            *
-  47          ********************************************/
-  48          /*
-  49          下面是用于在数码管上显示的数字的CODE
-  50          依次是从0开始到9再小数点.
-  51          */
-  52          u1 code smgduan[11]={0x3f,0x06,0x5b,0x4f,0x66,0x6d,0x7d,0x07,
-  53                                                  0x7f,0x6f,0x80};
-  54          typedef void (*func)(void);
-  55          
-C51 COMPILER V9.01   MAIN                                                                  01/23/2021 14:03:24 PAGE 2   
+   5          #define S01             (0x77)
+   6          #define S02             (0x7b)
+   7          #define S03             (0x7d)
+   8          #define S04             (0x7e)
+   9          #define S05             (0xb7)
+  10          #define S06             (0xbb)
+  11          #define S07             (0xbd)
+  12          #define S08             (0xbe)
+  13          #define S09             (0xd7)
+  14          #define S10             (0xdb)
+  15          #define S11             (0xdd)
+  16          #define S12             (0xde)
+  17          #define S13             (0xe7)
+  18          #define S14             (0xeb)
+  19          #define S15             (0xed)
+  20          #define S16             (0xee)
+  21          
+  22          #define NUM1     S01   //数字1
+  23          #define NUM2     S02   //数字2
+  24          #define NUM3     S03   //数字3
+  25          #define NUM4     S05   //数字4
+  26          #define NUM5     S06   //数字5
+  27          #define NUM6     S07   //数字6
+  28          #define NUM7     S09   //数字7
+  29          #define NUM8     S10   //数字8
+  30          #define NUM9     S11   //数字9
+  31          #define NUM0     S13   //数字0
+  32          #define POINT    S14   //小数点
+  33          
+  34          #define ADD      S04    //加法
+  35          #define SUB      S08    //减法
+  36          #define MUL      S12   //乘法
+  37          #define DIV      S16   //除法
+  38          #define EQU      S15   //等于
+  39            
+  40          //下面三个用于控制哪个数码管亮
+  41          sbit LSA = P2^2;
+  42          sbit LSB = P2^3;
+  43          sbit LSC = P2^4;
+  44          
+  45          
+  46          //数码管英语：numerical code tube
+  47          //用三个字母加数字表示显示的数码管NCT_num
+  48          //最左边的是0编号，最右边的是7编号
+  49          void SetNCT_0(void);
+  50          void SetNCT_1(void);
+  51          void SetNCT_2(void);
+  52          void SetNCT_3(void);
+  53          void SetNCT_4(void);
+  54          void SetNCT_5(void);
+  55          void SetNCT_6(void);
+C51 COMPILER V9.01   MAIN                                                                  01/10/2021 16:39:53 PAGE 2   
 
-  56          func fun_array[8] = {SetNCT_0,SetNCT_1,SetNCT_2,SetNCT_3,
-  57                               SetNCT_4,SetNCT_5,SetNCT_6,SetNCT_7};
-  58          /* 
-  59          func fun_array[8] = {SetNCT_7,SetNCT_6,SetNCT_5,SetNCT_4,
-  60                               SetNCT_3,SetNCT_2,SetNCT_1,SetNCT_0};
-  61            */
-  62          void KeyDown(void);
-  63          void delay(u2 i);
-  64          void DisPlay(u1* Num);
-  65          void FirstNumIsZeroFlagSet(u1* Num,u1 n);
-  66          u1 KeyValue;
-  67          /**********下面的这个数组不能改**********/
-  68          u1 FirstNumIsZeor[8] = {1,0,0,0,0,0,0,0};
-  69          /**********上面的这个数组不能改**********/
-  70          void main()
-  71          {
-  72   1          u1 Num[8] = {0,1,2,3,4,5,6,7};
-  73   1              
-  74   1          while(1)
-  75   1              {
-  76   2                   //KeyDown();
-  77   2                       DisPlay(Num);
-  78   2              }
-  79   1      }
-  80          
-  81          /*******************
-  82          * 软件模拟延时时间 *
-  83          * 5000相当于450ms  *
-  84          /******************/
-  85          void delay(u2 i)
-  86          {
-  87   1          while(i--);
-  88   1      }
-  89          
-  90          /*******************
-  91          * 动态晶体管显示   *
-  92          *  矩阵按下        *
-  93          /******************/
-  94          void KeyDown(void)
-  95          {
-  96   1          u1 out = 0;//当按键一直被按着不放时，用于强制退出
-  97   1              GPIO_KEY = 0x0f;
-  98   1              if(GPIO_KEY!=0x0f)
-  99   1              {
- 100   2                  delay(1000);//用于消抖
- 101   2                      if(GPIO_KEY!=0x0f)
- 102   2                      {
- 103   3                          switch(GPIO_KEY)
- 104   3                              {
- 105   4                                  case 0x07: KeyValue=0x01;break;
- 106   4                                      case 0x0b: KeyValue=0x02;break;
- 107   4                                      case 0x0d: KeyValue=0x03;break;
- 108   4                                      //case 0x0e: KeyValue=0x03;break;
- 109   4                              }
- 110   3                              GPIO_KEY = 0xf0;
- 111   3                              switch(GPIO_KEY)
- 112   3                              {
- 113   4                                  case 0x70: KeyValue += 0x00;break;
- 114   4                                      case 0xb0: KeyValue += 0x03;break;
- 115   4                                      case 0xd0: KeyValue += 0x06;break;
- 116   4                                      case 0xe0: KeyValue = 0x00;break;
- 117   4                              }
-C51 COMPILER V9.01   MAIN                                                                  01/23/2021 14:03:24 PAGE 3   
+  56          void SetNCT_7(void);
+  57          #define NCT_(x)    (SetNCT_##x)
+  58          /*
+  59          #define NCT_0()    (SetNCT_0())  
+  60          #define NCT_1()    (SetNCT_1())
+  61          #define NCT_2()    (SetNCT_2())
+  62          #define NCT_3()    (SetNCT_3())
+  63          #define NCT_4()    (SetNCT_4())
+  64          #define NCT_5()    (SetNCT_5())
+  65          #define NCT_6()    (SetNCT_6())
+  66          #define NCT_7()    (SetNCT_7())
+  67          */
+  68          /********************************************
+  69          *  +---0x01---+                             *
+  70          *  |              |                                                         *
+  71          *  |          |                                                         *
+  72          * 0x20      0x02        数码管上的显示数字              *
+  73          *  |          |                                                         *
+  74          *  |          |                                                         *
+  75          *  +---0x40---+                                                         *
+  76          *  |              |                                                             *
+  77          *  |              |                                                             *
+  78          * 0x10      0x04                                                        *
+  79          *  |              |                                                             *
+  80          *  |          |                                                         *
+  81          *  +---0x08---+ 0x80                                            *
+  82          ********************************************/
+  83          /*
+  84          下面是用于在数码管上显示的数字的CODE
+  85          依次是从0开始到9再小数点.
+  86          */
+  87          u1 code smgduan[12]={0x3f,0x06,0x5b,0x4f,0x66,0x6d,0x7d,0x07,
+  88                                                  0x7f,0x6f,0x80,0x5f};
+  89          typedef void (*func)(void);
+  90          
+  91          func fun_array[8] = {SetNCT_0,SetNCT_1,SetNCT_2,SetNCT_3,
+  92                               SetNCT_4,SetNCT_5,SetNCT_6,SetNCT_7};
+  93          /* 
+  94          func fun_array[8] = {SetNCT_7,SetNCT_6,SetNCT_5,SetNCT_4,
+  95                               SetNCT_3,SetNCT_2,SetNCT_1,SetNCT_0};
+  96            */
+  97          enum OPERATER
+  98          {
+  99              ADD_ = 1,
+ 100              SUB_    ,
+ 101              MUL_    ,
+ 102              DIV_    
+ 103          };
+ 104          
+ 105            u1 KeyScan(void);
+ 106          void KeyDown(void);
+ 107          void delay(u2 i);
+ 108          void DisPlay();
+ 109          void FirstNumIsZeroFlagSet(u1* Num,u1 n);
+ 110          void setNumArray(u1 NUM_X);
+ 111          void setNowCount(u1 getCount);
+ 112          void NumToTube(u4 NowCount);
+ 113          void ClearnNumArray();
+ 114            u4 NowCount = 0;
+ 115            u4 PreCount = 0;  //当加减乘除任意一个被按下是，储存之前的值也就是NowCount的值
+ 116            u1 operater = 0;
+ 117            u1 NumIndexRemain = 7;
+C51 COMPILER V9.01   MAIN                                                                  01/10/2021 16:39:53 PAGE 3   
 
- 118   3                      }
- 119   2              }
- 120   1              if((out<50)&&(GPIO_KEY!=0xf0)) //松手检测
- 121   1              {
- 122   2                  out++;
- 123   2                      delay(100);
- 124   2              }
- 125   1              //NCT_7();
- 126   1      }
- 127          
- 128          void SetNCT_0(void)
- 129          {
- 130   1          LSA = 1;LSB = 1;LSC = 1;
- 131   1      }
- 132          void SetNCT_1(void)
- 133          {
- 134   1          LSA = 0;LSB = 1;LSC = 1;
+ 118          /**********下面的这个数组不能改**********/
+ 119          u1 FirstNumIsZeor[8] = {1,0,0,0,0,0,0,0};
+ 120          /**********上面的这个数组不能改**********/
+ 121          
+ 122          u1 Num[8] = {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
+ 123          u1 NumPre[8] = {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff}; //当加减乘除任意一个被按下是，储存之前的值也就是
+             -Num的值
+ 124          /*下面变量为1时：非0被按下；为0时：0被按下*/
+ 125          u1 NumDown=0;
+ 126          u1 NumDownPre=0;
+ 127          u1 OperatDown = 0;
+ 128          void main()
+ 129          {       
+ 130   1          while(1)
+ 131   1              {
+ 132   2                   KeyDown();
+ 133   2                       DisPlay();
+ 134   2              }
  135   1      }
- 136          void SetNCT_2(void)
- 137          {
- 138   1          LSA = 1;LSB = 0;LSC = 1;
- 139   1      }
- 140          void SetNCT_3(void)
- 141          {
- 142   1          LSA = 0;LSB = 0;LSC = 1;
- 143   1      }
- 144          void SetNCT_4(void)
- 145          {
- 146   1          LSA = 1;LSB = 1;LSC = 0;
- 147   1      }
- 148          void SetNCT_5(void)
- 149          {
- 150   1          LSA = 0;LSB = 1;LSC = 0;
- 151   1      }
- 152          void SetNCT_6(void)
- 153          {
- 154   1          LSA = 1;LSB = 0;LSC = 0;
- 155   1      }
- 156          void SetNCT_7(void)
- 157          {
- 158   1          LSA = 0;LSB = 0;LSC = 0;
- 159   1      }
- 160          void DisPlay(u1* Num)
- 161          {
- 162   1          u1 temp[8];
- 163   1              u1 getNum;
- 164   1              u1 j = 7;  //用于函数指针
- 165   1              u1 i = 0;
- 166   1              FirstNumIsZeroFlagSet(Num,7);
- 167   1              for(;i<=7;i++)
- 168   1              {
- 169   2                  getNum = 0xf;
- 170   2                      temp[i] = Num[i];
- 171   2                      //P0 = 0;        //用于消除鬼影         u1 Num[8] = {9,2,11,4,5,6,0,0};
- 172   2                      if(temp[i]<=9&&FirstNumIsZeor[i]!=0)
- 173   2                      {
- 174   3                              getNum = temp[i];
- 175   3                              fun_array[j--]();
- 176   3                              GPIO_DIG = smgduan[getNum];
- 177   3                              delay(250);       //250ms左右肉眼差不多分辨不出来，超过会有闪现现象，太少的话亮度不够
- 178   3                              P0 = 0;  //用于消除鬼影
- 179   3                      }
-C51 COMPILER V9.01   MAIN                                                                  01/23/2021 14:03:24 PAGE 4   
+ 136          
+ 137          /*******************
+ 138          * 软件模拟延时时间 *
+ 139          * 5000相当于450ms  *
+ 140          /******************/
+ 141          void delay(u2 i)
+ 142          {
+ 143   1          while(i--);
+ 144   1      }
+ 145          
+ 146          /*******************
+ 147          * 动态晶体管显示   *
+ 148          *  矩阵按下        *
+ 149          /******************/
+ 150          void KeyDown(void)
+ 151          {
+ 152   1              switch( KeyScan() )
+ 153   1              {       
+ 154   2                      case NUM1:
+ 155   2                  NumDown=1;
+ 156   2                  OperatDown=0;
+ 157   2                  setNowCount(1);
+ 158   2                  setNumArray(1);
+ 159   2                  break;
+ 160   2      
+ 161   2                      case NUM2:
+ 162   2                  NumDown=1;
+ 163   2                  OperatDown=0;
+ 164   2                  setNowCount(2);
+ 165   2                  setNumArray(2);
+ 166   2                  break;
+ 167   2      
+ 168   2                      case NUM3:
+ 169   2                  NumDown=1;
+ 170   2                  OperatDown=0;
+ 171   2                  setNowCount(3);
+ 172   2                  setNumArray(3);
+ 173   2                  break;
+ 174   2      
+ 175   2                      case NUM4:
+ 176   2                  NumDown=1;
+ 177   2                  OperatDown=0;
+ 178   2                  setNowCount(4);
+C51 COMPILER V9.01   MAIN                                                                  01/10/2021 16:39:53 PAGE 4   
 
- 180   2              }  
- 181   1      }
- 182          /********************************************
- 183          *这个方法是用于不显示第一个非零数字之前的零 *
- 184          *比如001234500，1之前的两个0应该在数码管上  *
- 185          *不显示，数码管上应该只显示1234500          *
- 186          ********************************************/
- 187          void FirstNumIsZeroFlagSet(u1* Num,u1 n)
- 188          {
- 189   1          u1 i;
- 190   1              if(n>0)   //这里必须要大于0，不然会发生乱七八糟的事情
- 191   1              {
- 192   2                      i = n; 
- 193   2                      //注意，这里必须要初始化，不然的话i的值很可能是0，会把u1 FirstNumIsZeor[8] = {1,0,0,0,0,0,0,0};的1给串改
+ 179   2                  setNumArray(4);
+ 180   2                  break;
+ 181   2      
+ 182   2                      case NUM5:
+ 183   2                  NumDown=1;
+ 184   2                  OperatDown=0;
+ 185   2                  setNowCount(5);
+ 186   2                  setNumArray(5);
+ 187   2                  break;
+ 188   2      
+ 189   2                      case NUM6:
+ 190   2                  NumDown=1;
+ 191   2                  OperatDown=0;
+ 192   2                  setNowCount(6);
+ 193   2                  setNumArray(6);
+ 194   2                  break;
+ 195   2      
+ 196   2                      case NUM7:
+ 197   2                  NumDown=1;
+ 198   2                  OperatDown=0;
+ 199   2                  setNowCount(7);
+ 200   2                  setNumArray(7);
+ 201   2                  break;
+ 202   2      
+ 203   2                      case NUM8:
+ 204   2                  NumDown=1;
+ 205   2                  OperatDown=0;
+ 206   2                  setNowCount(8);
+ 207   2                  setNumArray(8);
+ 208   2                  break;
+ 209   2      
+ 210   2                      case NUM9:
+ 211   2                  NumDown=1;
+ 212   2                  OperatDown=0;
+ 213   2                  setNowCount(9);
+ 214   2                  setNumArray(9);
+ 215   2                  break;
+ 216   2      
+ 217   2                      case NUM0:
+ 218   2                  OperatDown=0;
+ 219   2                  if(NumDown!=0)
+ 220   2                  {
+ 221   3                      setNowCount(0);
+ 222   3                      setNumArray(0);
+ 223   3                  }
+ 224   2                  break;
+ 225   2      
+ 226   2                      case ADD:
+ 227   2                  PreCount = NowCount;
+ 228   2                  NowCount = 0;
+ 229   2                  NumDown=0;
+ 230   2                  OperatDown=1;
+ 231   2                  operater = ADD_;
+ 232   2                  //setNumArray(11);
+ 233   2                  ClearnNumArray();
+ 234   2                  break;
+ 235   2      
+ 236   2              case SUB:
+ 237   2                  PreCount = NowCount;
+ 238   2                  NowCount = 0;
+ 239   2                  NumDown=0;
+ 240   2                  OperatDown=1;
+C51 COMPILER V9.01   MAIN                                                                  01/10/2021 16:39:53 PAGE 5   
+
+ 241   2                  operater = SUB_;
+ 242   2                  ClearnNumArray();
+ 243   2                  break;
+ 244   2      
+ 245   2              case MUL:
+ 246   2                  PreCount = NowCount;
+ 247   2                  NowCount = 0;
+ 248   2                  NumDown=0;
+ 249   2                  OperatDown=1;
+ 250   2                  operater = MUL_;
+ 251   2                  ClearnNumArray();
+ 252   2                  break;
+ 253   2      
+ 254   2              case DIV:
+ 255   2                  PreCount = NowCount;
+ 256   2                  NowCount = 0;
+ 257   2                  NumDown=0;
+ 258   2                  OperatDown=1;
+ 259   2                  operater = DIV_;
+ 260   2                  ClearnNumArray();
+ 261   2                  break;
+ 262   2      
+ 263   2              case EQU:
+ 264   2              //    NowCount = 0;
+ 265   2                  NumDown=0;
+ 266   2              //    OperatDown=1;
+ 267   2                  switch(operater)
+ 268   2                  {
+ 269   3                      case ADD_:
+ 270   3                          NowCount = PreCount + NowCount;
+ 271   3                          break;
+ 272   3                      case SUB_:
+ 273   3                          NowCount = PreCount - NowCount;
+ 274   3                          break;
+ 275   3                      case MUL_:
+ 276   3                          NowCount = PreCount * NowCount;
+ 277   3                          break;
+ 278   3                      case DIV_:
+ 279   3                          NowCount = PreCount / NowCount;
+ 280   3                          break;
+ 281   3                  }
+ 282   2                  NumToTube(NowCount);
+ 283   2                  break;
+ 284   2              }
+ 285   1      }
+ 286          /***************************************
+ 287          ****此函数用于设置运算的输入值**********
+ 288          ***************************************/
+ 289          void setNowCount(u1 getCount)
+ 290          {
+ 291   1           NowCount = NowCount*10+ getCount;
+ 292   1      }
+ 293          
+ 294          /*********************************
+ 295          ****此函数用于数码管显示数字用****
+ 296          *********************************/
+ 297          void DisPlay()
+ 298          {
+ 299   1          u1 temp[8];
+ 300   1              u1 getNum;
+ 301   1              u1 j = 7;  //用于函数指针
+ 302   1              u1 i = 0;
+C51 COMPILER V9.01   MAIN                                                                  01/10/2021 16:39:53 PAGE 6   
+
+ 303   1         // NumToTube(12345678);
+ 304   1              FirstNumIsZeroFlagSet(Num,7);
+ 305   1              for(;i<=7;i++)
+ 306   1              {
+ 307   2              if(OperatDown==1)
+ 308   2              {
+ 309   3                  temp[i] = NumPre[i];  
+ 310   3              }
+ 311   2              else
+ 312   2              {
+ 313   3                          temp[i] = Num[i];
+ 314   3              }
+ 315   2                      if(temp[i]<=9&&FirstNumIsZeor[i]!=0)
+ 316   2                      {
+ 317   3                              getNum = temp[i];
+ 318   3                              fun_array[j--]();
+ 319   3                              GPIO_DIG = smgduan[getNum];
+ 320   3                              delay(200);       //250ms左右肉眼差不多分辨不出来，超过会有闪现现象，太少的话亮度不够
+ 321   3                              P0 = 0;  //用于消除鬼影
+ 322   3                      }
+ 323   2                      else
+ 324   2                      {
+ 325   3                          //P0 = 0;    //用于在没有按下数字前，数码管不显示任何数字
+ 326   3                      }
+ 327   2              }  
+ 328   1      }
+ 329          /********************************************
+ 330          *这个方法是用于不显示第一个非零数字之前的零 *
+ 331          *比如001234500，1之前的两个0应该在数码管上  *
+ 332          *不显示，数码管上应该只显示1234500          *
+ 333          ********************************************/
+ 334          void FirstNumIsZeroFlagSet(u1* Num,u1 n)
+ 335          {
+ 336   1          u1 i;
+ 337   1              if(n>0)   //这里必须要大于0，不然会发生乱七八糟的事情
+ 338   1              {
+ 339   2                      i = n; 
+ 340   2                      //注意，这里必须要初始化，不然的话i的值很可能是0，会把u1 FirstNumIsZeor[8] = {1,0,0,0,0,0,0,0};的1给串改
              -掉
- 194   2                      if(Num[n] != 0)
- 195   2                      {
- 196   3                               for(i=n;i>0;i--)
- 197   3                              {
- 198   4                                       FirstNumIsZeor[i] = 1;
- 199   4                              }
- 200   3                      }
- 201   2                      else
- 202   2                      {
- 203   3                              FirstNumIsZeor[i] = 0;
- 204   3                              FirstNumIsZeroFlagSet(Num,(n-1));
- 205   3                      }
- 206   2              }
- 207   1      }
- 208          /* 下面的代码优化后得到上面的函数
- 209          void FirstNumIsZeroFlagSet(u1* Num)         Num[8] = {0,1,2,3,4,5,6,7};
- 210          {
- 211              u1 i;
- 212              if(Num[7] != 0)
- 213                  {
- 214                      for(i=7;i>0;i--)
- 215                          {
- 216                          FirstNumIsZeor[i] = 1;
- 217                          }
- 218                  }
- 219                  else
- 220                  {
- 221                      FirstNumIsZeor[7] = 0;
- 222                          if(Num[6] != 0)
- 223                          {
- 224                              for(i=6;i>0;i--)
- 225                              {
- 226                              FirstNumIsZeor[i] = 1;
- 227                              }   
- 228                          
- 229                          }
- 230                          else
- 231                          {
- 232                              FirstNumIsZeor[6] = 0;
- 233                                  if(Num[5] != 0)
- 234                                  {
- 235                                      for(i=5;i>0;i--)
- 236                                          {
- 237                                              FirstNumIsZeor[i] = 1;
- 238                                          }
- 239                                  }
- 240                                  else
-C51 COMPILER V9.01   MAIN                                                                  01/23/2021 14:03:24 PAGE 5   
+ 341   2                      if(Num[n] != 0)
+ 342   2                      {
+ 343   3                               for(i=n;i>0;i--)
+ 344   3                              {
+ 345   4                                       FirstNumIsZeor[i] = 1;
+ 346   4                              }
+ 347   3                      }
+ 348   2                      else
+ 349   2                      {
+ 350   3                              FirstNumIsZeor[i] = 0;
+ 351   3                              FirstNumIsZeroFlagSet(Num,(n-1));
+ 352   3                      }
+ 353   2              }
+ 354   1      }
+ 355          /***************************************
+ 356          ****此函数用于判断矩阵哪个按键被按下****
+ 357          ***************************************/
+ 358          u1 KeyScan()
+ 359          {
+ 360   1              u1 cord_l,cord_h;//声明列线和行线的值的储存变量
+ 361   1              GPIO_KEY = 0xf0;//1111 0000
+ 362   1              if( (GPIO_KEY & 0xf0) != 0xf0)//判断是否有按键按下
+ 363   1              {
+C51 COMPILER V9.01   MAIN                                                                  01/10/2021 16:39:53 PAGE 7   
 
- 241                                  {
- 242                                      FirstNumIsZeor[5] = 0;
- 243                                          if(Num[4] != 0)
- 244                                          {
- 245                                              for(i=4;i>0;i--)
- 246                                                  {
- 247                                                      FirstNumIsZeor[i] = 1;
- 248                                                  }
- 249                                          }
- 250                                          else
- 251                                          {
- 252                                              FirstNumIsZeor[4] = 0;
- 253                                                  if(Num[3] != 0)
- 254                                                  {
- 255                                                      for(i=3;i>0;i--)
- 256                                                          {
- 257                                                              FirstNumIsZeor[i] = 1;
- 258                                                          }
- 259                                                  }
- 260                                                  else
- 261                                                  {
- 262                                                      FirstNumIsZeor[3] = 0;
- 263                                                          if(Num[2] !=0)
- 264                                                          {
- 265                                                             for(i=2;i>0;i--)
- 266                                                             {
- 267                                                                 FirstNumIsZeor[i] = 1;
- 268                                                             }
- 269                                                          }
- 270                                                          else
- 271                                                          {
- 272                                                              FirstNumIsZeor[2] = 0;
- 273                                                              if(Num[1] !=0)
- 274                                                                  {
- 275                                                                     for(i=1;i>0;i--)
- 276                                                                     {
- 277                                                                         FirstNumIsZeor[i] = 1;
- 278                                                                     }
- 279                                                                  }
- 280                                                                  else
- 281                                                                  {
- 282                                                                       FirstNumIsZeor[1] = 0;
- 283                                                                  }
- 284                                                          }
- 285                                                  }
- 286                                          }
- 287                                  }
- 288                          }
- 289                  }
- 290          }
- 291          */
+ 364   2                      delay(5);//软件消抖
+ 365   2                      if( (GPIO_KEY & 0xf0) != 0xf0)//判断是否有按键按下
+ 366   2                      {
+ 367   3                                cord_l = GPIO_KEY & 0xf0;// 储存列线值
+ 368   3                                GPIO_KEY = cord_l | 0x0f;
+ 369   3                                cord_h = GPIO_KEY & 0x0f;// 储存行线值
+ 370   3                                while( (GPIO_KEY & 0x0f) != 0x0f );//松手检测
+ 371   3                                return (cord_l + cord_h);//返回键值码
+ 372   3                      }       
+ 373   2              }
+ 374   1                      
+ 375   1      }
+ 376          /***************************************
+ 377          ****当前按下什么值数码管上显示什么值****
+ 378          ***************************************/
+ 379          void setNumArray(u1 NUM_X)
+ 380          {
+ 381   1          if(NumIndexRemain>=0)
+ 382   1              Num[NumIndexRemain--] =  NUM_X;
+ 383   1      }
+ 384          
+ 385          void ClearnNumArray()
+ 386          {
+ 387   1          u1 i = 0;
+ 388   1          NumIndexRemain = 7;  //这个变量必须重新被赋值
+ 389   1         
+ 390   1          for(i=0;i<=7;i++)
+ 391   1          {
+ 392   2              NumPre[i] = Num[i];
+ 393   2              Num[i] = 0xff;
+ 394   2          } 
+ 395   1      }
+ 396          
+ 397          /***************************************
+ 398          ****此函数将数值转换成数码管显示********
+ 399          ***************************************/
+ 400          void NumToTube(u4 NowCount)
+ 401          {
+ 402   1          s1 i = 0;
+ 403   1          u1 figure = 1;
+ 404   1          u1 Num_t[8] = {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
+ 405   1          u4 NowCount_t = NowCount;
+ 406   1          u1 Remainder;
+ 407   1          NumIndexRemain = 7;  //这个变量必须重新被赋值
+ 408   1          while((NowCount_t=NowCount_t/10)!=0)
+ 409   1              figure++;
+ 410   1          for(i=0;i<=7;i++)
+ 411   1          {
+ 412   2              Num[i] = 0xff;
+ 413   2          }
+ 414   1          NowCount_t = NowCount;
+ 415   1        //  for(i=(7-figure+1);i<=7;i++)
+ 416   1          for(i=7;i>(7-figure);i--)
+ 417   1          {
+ 418   2             Remainder = (u1)(NowCount_t % 10);
+ 419   2             NowCount_t = NowCount_t /10;
+ 420   2             //setNumArray(Remainder);   /*第一不能用这个来设置Num数组里面的值，这个是用来按键的时候设置的*/
+ 421   2             Num[7-i] = Remainder;       /*第二，需要反转*/
+ 422   2          }
+ 423   1      }
+ 424          
+ 425          
+C51 COMPILER V9.01   MAIN                                                                  01/10/2021 16:39:53 PAGE 8   
+
+ 426          
+ 427          void SetNCT_0(void)
+ 428          {
+ 429   1          LSA = 1;LSB = 1;LSC = 1;
+ 430   1      }
+ 431          void SetNCT_1(void)
+ 432          {
+ 433   1          LSA = 0;LSB = 1;LSC = 1;
+ 434   1      }
+ 435          void SetNCT_2(void)
+ 436          {
+ 437   1          LSA = 1;LSB = 0;LSC = 1;
+ 438   1      }
+ 439          void SetNCT_3(void)
+ 440          {
+ 441   1          LSA = 0;LSB = 0;LSC = 1;
+ 442   1      }
+ 443          void SetNCT_4(void)
+ 444          {
+ 445   1          LSA = 1;LSB = 1;LSC = 0;
+ 446   1      }
+ 447          void SetNCT_5(void)
+ 448          {
+ 449   1          LSA = 0;LSB = 1;LSC = 0;
+ 450   1      }
+ 451          void SetNCT_6(void)
+ 452          {
+ 453   1          LSA = 1;LSB = 0;LSC = 0;
+ 454   1      }
+ 455          void SetNCT_7(void)
+ 456          {
+ 457   1          LSA = 0;LSB = 0;LSC = 0;
+ 458   1      }
+*** WARNING C291 IN LINE 375 OF MAIN.C: not every exit path returns a value
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =    384    ----
-   CONSTANT SIZE    =     19    ----
+   CODE SIZE        =   1056    ----
+   CONSTANT SIZE    =     20    ----
    XDATA SIZE       =   ----    ----
    PDATA SIZE       =   ----    ----
-   DATA SIZE        =     33      26
+   DATA SIZE        =     61      34
    IDATA SIZE       =   ----    ----
    BIT SIZE         =   ----    ----
 END OF MODULE INFORMATION.
 
-C51 COMPILER V9.01   MAIN                                                                  01/23/2021 14:03:24 PAGE 6   
 
-
-C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)
