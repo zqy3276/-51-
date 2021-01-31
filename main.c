@@ -84,13 +84,13 @@ void SetNCT_7(void);
 下面是用于在数码管上显示的数字的CODE
 依次是从0开始到9再小数点.
 */                /*  0    1    2    3    4    5    6    7    8    9    .    a    b    c    d    e    F*/
-u1 code smgduan[27]={0x3f,0x06,0x5b,0x4f,0x66,0x6d,0x7d,0x07,0x7f,0x6f,0x80,0x5f,0x7c,0x59,0x56,0x7b,0x71
+u1 code smgduan[27]={0x3f,0x06,0x5b,0x4f,0x66,0x6d,0x7d,0x07,0x7f,0x6f,0x80,0x5f,0x7c,0x59,0x56,0x7b,0x71,
                   /*  0.   1.   2.   3.   4.   5.   6.   7.   8.   9.    */   
                      0xbf,0x8b,0xdb,0xcf,0xe6,0xed,0xfd,0x87,0xff,0xef};   //0和0.差了17
                  /*   0    1    2    3    4    5    6    7    8    9    10   11   12   13   14   15   16
                       17   18   19   20   21   22   23   24   25   26   */
 typedef void (*func)(void);
-
+//0是显示最高位，7是显示最低位
 func fun_array[8] = {SetNCT_0,SetNCT_1,SetNCT_2,SetNCT_3,
                      SetNCT_4,SetNCT_5,SetNCT_6,SetNCT_7};
 /* 
@@ -125,9 +125,10 @@ u1 FirstNumIsZeor[8] = {1,0,0,0,0,0,0,0};
 u1 Num[8] = {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff};
 u1 NumPre[8] = {0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff}; //当加减乘除任意一个被按下是，储存之前的值也就是Num的值
 /*下面变量为1时：非0被按下；为0时：0被按下*/
-u1 NumDown=0;
-u1 NumDownPre=0;
+u1 NumDown = 0;
+u1 NumDownPre = 0;
 u1 OperatDown = 0;
+u1 FirstZeroDown = 0;    //第一次0被按下后置1，+-*/=五个被按下后置0
 void main()
 {	
     while(1)
@@ -137,14 +138,6 @@ void main()
 	}
 }
 
-/*******************
-* 软件模拟延时时间 *
-* 5000相当于450ms  *
-/******************/
-void delay(u2 i)
-{
-    while(i--);
-}
 
 /*******************
 * 动态晶体管显示   *
@@ -219,9 +212,14 @@ void KeyDown(void)
 
 		case NUM0:
             OperatDown=0;
-            if(NumDown!=0)
+            setNowCount(0);
+            if(FirstZeroDown==0)
             {
-                setNowCount(0);
+                FirstZeroDown = 1;
+            }
+            if((NumDown!=0))   //过滤掉最早按得0
+            {
+                FirstZeroDown = 1;               
                 setNumArray(0);
             }
             break;
@@ -229,8 +227,9 @@ void KeyDown(void)
 		case ADD:
             PreCount = NowCount;
             NowCount = 0;
-            NumDown=0;
-            OperatDown=1;
+            NumDown = 0;
+            FirstZeroDown = 0;
+            OperatDown = 1;
             operater = ADD_;
             //setNumArray(11);
             ClearnNumArray();
@@ -239,8 +238,9 @@ void KeyDown(void)
         case SUB:
             PreCount = NowCount;
             NowCount = 0;
-            NumDown=0;
-            OperatDown=1;
+            NumDown = 0;
+            FirstZeroDown = 0;
+            OperatDown = 1;
             operater = SUB_;
             ClearnNumArray();
             break;
@@ -248,8 +248,9 @@ void KeyDown(void)
         case MUL:
             PreCount = NowCount;
             NowCount = 0;
-            NumDown=0;
-            OperatDown=1;
+            NumDown = 0;
+            FirstZeroDown = 0;
+            OperatDown = 1;
             operater = MUL_;
             ClearnNumArray();
             break;
@@ -257,17 +258,19 @@ void KeyDown(void)
         case DIV:
             PreCount = NowCount;
             NowCount = 0;
-            NumDown=0;
-            OperatDown=1;
+            NumDown = 0;
+            FirstZeroDown = 0;
+            OperatDown = 1;
             operater = DIV_;
             ClearnNumArray();
             break;
 
         case EQU:
         //    NowCount = 0;
-            NumDown=0;
+            NumDown = 0;
+            FirstZeroDown = 0;
         //    OperatDown=1;
-            switch(operater)
+            switch( operater )
             {
                 case ADD_:
                     NowCount = PreCount + NowCount;
@@ -280,6 +283,9 @@ void KeyDown(void)
                     break;
                 case DIV_:
                     NowCount = PreCount / NowCount;
+                    break;
+                default:
+                    NowCount = NowCount;
                     break;
             }
             NumToTube(NowCount);
@@ -301,33 +307,41 @@ void DisPlay()
 {
     u1 temp[8];
 	u1 getNum;
-	u1 j = 7;  //用于函数指针
+	u1 j = 7;                               //用于函数指针
 	u1 i = 0;
     //NumToTube(12345678);
-	FirstNumIsZeroFlagSet(Num,7);
-	for(;i<=7;i++)
-	{
-        if(OperatDown==1)
-        {
-            temp[i] = NumPre[i];  
-        }
-        else
-        {
-		    temp[i] = Num[i];
-        }
-		if(temp[i]<=9&&FirstNumIsZeor[i]!=0)
-		{
-			getNum = temp[i];
-			fun_array[j--]();
-			GPIO_DIG = smgduan[getNum];
-			delay(200);	  //250ms左右肉眼差不多分辨不出来，超过会有闪现现象，太少的话亮度不够
-			P0 = 0;	 //用于消除鬼影
-		}
-		else
-		{
-		    //P0 = 0;	 //用于在没有按下数字前，数码管不显示任何数字
-		}
-	}  
+    if(FirstZeroDown==1)                    //第一次是0被按下后只要没按下非0，不管按多少下0都只显示一个0   
+    {
+      SetNCT_7();                           //选择数码管
+      GPIO_DIG = smgduan[0];                //数码管显示数字
+    }
+    else
+    {
+    	FirstNumIsZeroFlagSet(Num,7);
+    	for(;i<=7;i++)
+    	{
+            if(OperatDown==1)
+            {
+                temp[i] = NumPre[i];  
+            }
+            else
+            {
+    		    temp[i] = Num[i];
+            }
+    		if(temp[i]<=9&&FirstNumIsZeor[i]!=0)
+    		{
+    			getNum = temp[i];
+    			fun_array[j--]();               //选择数码管
+    			GPIO_DIG = smgduan[getNum];     //数码管显示数字
+    			delay(200);	                    //250ms左右肉眼差不多分辨不出来，超过会有闪现现象，太少的话亮度不够
+    			P0 = 0;	                        //用于消除鬼影
+    		}
+    		else
+    		{
+    		    //P0 = 0;	                    //用于在没有按下数字前，数码管不显示任何数字
+    		}
+    	}
+    }  
 }
 /********************************************
 *这个方法是用于不显示第一个非零数字之前的零 *
@@ -458,4 +472,12 @@ void SetNCT_6(void)
 void SetNCT_7(void)
 {
     LSA = 0;LSB = 0;LSC = 0;
+}
+/*******************
+* 软件模拟延时时间 *
+* 5000相当于450ms  *
+/******************/
+void delay(u2 i)
+{
+    while(i--);
 }
